@@ -20,6 +20,12 @@ docker compose up -d
 Note: Check that pgAdmin isn't running on the same ports as Kestra. If so, check out the FAQ at the bottom of the README.
 
 Once the container starts, you can access the Kestra UI at http://localhost:8080.
+Refer to docker-compose.yml for default username and password:
+
+```bash
+username: "admin@kestra.io" # it must be a valid email address
+password: Admin1234
+```
 
 To shut down Kestra, go to the same directory and run the following command:
 
