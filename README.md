@@ -12,10 +12,10 @@ Add information about setting a username and password.
 
 We'll set up Kestra using Docker Compose containing one container for the Kestra server and another for the Postgres database:
 
-'''bash
+```bash
 cd 02-workflow-orchestration
 docker compose up -d
-'''
+```
 
 Note: Check that pgAdmin isn't running on the same ports as Kestra. If so, check out the FAQ at the bottom of the README.
 
