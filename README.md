@@ -134,7 +134,7 @@ The flow code: [`04_postgres_taxi.yaml`](flows/04_postgres_taxi.yaml).
 
 - [Docker Compose with Kestra, Postgres and pgAdmin](docker-compose.yml)
 
-### 2.3.3 Local DB: Learn Scheduling and Backfills
+### Local DB: Learn Scheduling and Backfills
 
 We can now schedule the same pipeline shown above to run daily at 9 AM UTC. We'll also demonstrate how to backfill the data pipeline to run on historical data.
 
@@ -142,14 +142,14 @@ Note: given the large dataset, we'll backfill only data for the green taxi datas
 
 The flow code: [`05_postgres_taxi_scheduled.yaml`](flows/05_postgres_taxi_scheduled.yaml).
 
-## 2.4 ELT Pipelines in Kestra: Google Cloud Platform
+## ELT Pipelines in Kestra: Google Cloud Platform
 
 Now that you've learned how to build ETL pipelines locally using Postgres, we are ready to move to the cloud. In this section, we'll load the same Yellow and Green Taxi data to Google Cloud Platform (GCP) using:
 
 1. Google Cloud Storage (GCS) as a data lake  
 2. BigQuery as a data warehouse.
 
-### 2.4.1 - ETL vs ELT
+### ETL vs ELT
 
 Earlier we made a ETL pipeline inside of Kestra:
 
