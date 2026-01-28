@@ -1,0 +1,43 @@
+id: dotterel_458691
+namespace: company.team
+
+tasks:
+  - id: download_taxi_data
+    type: io.kestra.plugin.core.http.Download
+    # Replace with the actual URL of your NYC taxi data CSV file
+    uri: https://huggingface.co/datasets/kestra/datasets/raw/main/csv/orders.csv
+
+  - id: upload_taxi_data_to_gcs
+    type: io.kestra.plugin.gcp.gcs.Upload
+    from: "{{ outputs.download_taxi_data.uri }}"
+    # Replace with your GCS bucket and desired path
+    to: "gs://your-gcs-bucket/nyc-taxi-data/data.csv"
+
+  - id: load_gcs_to_bigquery
+    type: io.kestra.plugin.gcp.bigquery.LoadFromGcs
+    from:
+      - "{{ outputs.upload_taxi_data_to_gcs.uri }}"
+    # Replace with your BigQuery project ID, dataset ID, and table name
+    destinationTable: "your_project_id.your_dataset_id.nyc_taxi_table"
+    format: CSV
+    autodetect: true
+    csvOptions:
+      skipLeadingRows: 1 # Skips the header row if present
+      
+    # DK - had to add csv options but we insist on <<autodetect: true >>
+
+    # We automatically infer schema and options for CSV files
+    # If autodetect is not sufficient, you can specify schema and csvOptions explicitly:
+    # csvOptions:
+    #   skipLeadingRows: 1 # Skips the header row if present
+    #   fieldDelimiter: ","
+    # schema:
+    #   fields:
+    #     - name: vendor_id
+    #       type: STRING
+    #     - name: pickup_datetime
+    #       type: TIMESTAMP
+    #     - name: dropoff_datetime
+    #       type: TIMESTAMP
+    #     # Add all your CSV columns here with their respective BigQuery types
+
