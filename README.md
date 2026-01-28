@@ -87,7 +87,7 @@ Next, we're gonna build ETL pipelines for Yellow and Green Taxi data from NYC’
 
 ### Getting Started Pipeline
 
-This introductory flow is added just to demonstrate a simple data pipeline which extracts data via HTTP REST API, transforms that data in Python and then queries it using DuckDB. For this stage, a new separate Postgres database is created for the exercises. 
+This introductory flow is added just to demonstrate a simple data pipeline which extracts data via HTTP REST API, transforms that data in Python and then queries it using DuckDB. For this stage, a new separate Postgres database is created for the exercises.
 
 ```mermaid
 graph LR
@@ -127,6 +127,241 @@ graph LR
 
 The flow code: [`04_postgres_taxi.yaml`](flows/04_postgres_taxi.yaml).
 
-
 > [!NOTE]  
 > The NYC Taxi and Limousine Commission (TLC) Trip Record Data provided on the [nyc.gov](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page) website is currently available only in a Parquet format, but this is NOT the dataset we're going to use in this course. For the purpose of this course, we'll use the **CSV files** available [here on GitHub](https://github.com/DataTalksClub/nyc-tlc-data/releases). This is because the Parquet format can be challenging to understand by newcomers, and we want to make the course as accessible as possible — the CSV format can be easily introspected using tools like Excel or Google Sheets, or even a simple text editor.
+
+#### Resources - Docker-compose and PGAdmin
+
+- [Docker Compose with Kestra, Postgres and pgAdmin](docker-compose.yml)
+
+### 2.3.3 Local DB: Learn Scheduling and Backfills
+
+We can now schedule the same pipeline shown above to run daily at 9 AM UTC. We'll also demonstrate how to backfill the data pipeline to run on historical data.
+
+Note: given the large dataset, we'll backfill only data for the green taxi dataset for the year 2019.
+
+The flow code: [`05_postgres_taxi_scheduled.yaml`](flows/05_postgres_taxi_scheduled.yaml).
+
+## 2.4 ELT Pipelines in Kestra: Google Cloud Platform
+
+Now that you've learned how to build ETL pipelines locally using Postgres, we are ready to move to the cloud. In this section, we'll load the same Yellow and Green Taxi data to Google Cloud Platform (GCP) using:
+
+1. Google Cloud Storage (GCS) as a data lake  
+2. BigQuery as a data warehouse.
+
+### 2.4.1 - ETL vs ELT
+
+Earlier we made a ETL pipeline inside of Kestra:
+
+- **Extract:** Firstly, we extract the dataset from GitHub
+- **Transform:** Next, we transform it with Python
+- **Load:** Finally, we load it into our Postgres database
+
+While this is very standard across the industry, sometimes it makes sense to change the order when working with the cloud. If you're working with a large dataset, like the Yellow Taxi data, there can be benefits to extracting and loading straight into a data warehouse, and then performing transformations directly in the data warehouse. When working with BigQuery, we will use ELT:
+
+- **Extract:** Firstly, we extract the dataset from GitHub
+- **Load:** Next, we load this dataset (in this case, a csv file) into a data lake (Google Cloud Storage)
+- **Transform:** Finally, we can create a table inside of our data warehouse (BigQuery) which uses the data from our data lake to perform our transformations.
+
+The reason for loading into the data warehouse before transforming means we can utilize the cloud's performance benefits for transforming large datasets. What might take a lot longer for a local machine, can take a fraction of the time in the cloud.
+
+Over the next few videos, we'll look at setting up BigQuery and transforming the Yellow Taxi dataset.
+
+#### Resources - ETL vs ELT
+
+- [ETL vs ELT Video](https://go.kestra.io/de-zoomcamp/etl-vs-elt)
+- [Data Warehouse 101 Video](https://go.kestra.io/de-zoomcamp/data-warehouse-101)
+- [Data Lakes 101 Video](https://go.kestra.io/de-zoomcamp/data-lakes-101)
+
+### Setup Google Cloud Platform (GCP)
+
+Before we start loading data to GCP, we need to set up the Google Cloud Platform. 
+
+First, adjust the following flow [`06_gcp_kv.yaml`](flows/06_gcp_kv.yaml) to include your service account, GCP project ID, BigQuery dataset and GCS bucket name (_along with their location_) as KV Store values:
+
+- GCP_PROJECT_ID
+- GCP_LOCATION
+- GCP_BUCKET_NAME
+- GCP_DATASET.
+
+#### Create GCP Resources
+
+If you haven't already created the GCS bucket and BigQuery dataset, you can use this flow to create them: [`07_gcp_setup.yaml`](flows/07_gcp_setup.yaml).
+
+#### Resources - GCP
+
+- [Set up Google Cloud Service Account in Kestra](https://go.kestra.io/de-zoomcamp/google-sa)
+
+### GCP Workflow: Load Taxi Data to BigQuery
+
+Now that Google Cloud is set up with a storage bucket, we can start the ELT process.
+
+```mermaid
+graph LR
+  SetLabel[Set Labels] --> Extract[Extract CSV Data]
+  Extract --> UploadToGCS[Upload Data to GCS]
+  UploadToGCS -->|Taxi=Yellow| BQYellowTripdata[Main Yellow Tripdata Table]:::yellow
+  UploadToGCS -->|Taxi=Green| BQGreenTripdata[Main Green Tripdata Table]:::green
+  BQYellowTripdata --> BQYellowTableExt[External Table]:::yellow
+  BQGreenTripdata --> BQGreenTableExt[External Table]:::green
+  BQYellowTableExt --> BQYellowTableTmp[Monthly Table]:::yellow
+  BQGreenTableExt --> BQGreenTableTmp[Monthly Table]:::green
+  BQYellowTableTmp --> BQYellowMerge[Merge to Main Table]:::yellow
+  BQGreenTableTmp --> BQGreenMerge[Merge to Main Table]:::green
+  BQYellowMerge --> PurgeFiles[Purge Files]
+  BQGreenMerge --> PurgeFiles[Purge Files]
+
+  classDef yellow fill:#FFD700,stroke:#000,stroke-width:1px,color:#B00000;
+  classDef green fill:#32CD32,stroke:#000,stroke-width:1px,color:#B00000;
+```
+
+The flow code: [`08_gcp_taxi.yaml`](flows/08_gcp_taxi.yaml).
+
+### GCP Workflow: Schedule and Backfill Full Dataset
+
+We can now schedule the same pipeline shown above to run daily at 9 AM UTC for the green dataset and at 10 AM UTC for the yellow dataset. You can backfill historical data directly from the Kestra UI.
+
+Since we now process data in a cloud environment with infinitely scalable storage and compute, we can backfill the entire dataset for both the yellow and green taxi data without the risk of running out of resources on our local machine.
+
+The flow code: [`09_gcp_taxi_scheduled.yaml`](flows/09_gcp_taxi_scheduled.yaml).
+
+## Using AI for Data Engineering in Kestra
+
+This section builds on what you learned earlier in Module 2 to show you how AI can speed up workflow development.
+
+By the end of this section, you will:
+
+- Understand why context engineering matters when collaborating with LLMs
+- Use AI Copilot to build Kestra flows faster
+- Use Retrieval Augmented Generation (RAG) in data pipelines
+
+### Prerequisites
+
+- Completion of earlier sections (Workflow Orchestration with Kestra)
+- Kestra running locally
+- Google Cloud account with access to Gemini API (there's a generous free tier!)
+
+---
+
+### Introduction: Why AI for Workflows?
+
+As data engineers, we spend significant time writing boilerplate code, searching documentation, and structuring data pipelines. AI tools can help us:
+
+- **Generate workflows faster**: Describe what you want to accomplish in natural language instead of writing YAML from scratch
+- **Avoid errors**: Get syntax-correct, up-to-date workflow code that follows best practices
+
+However, AI is only as good as the context we provide. This section teaches you how to engineer that context for reliable, production-ready data workflows.
+
+### Context Engineering with ChatGPT
+
+Let's start by seeing what happens when AI lacks proper context.
+
+#### Experiment: ChatGPT Without Context
+
+1. **Open ChatGPT in a private browser window** (to avoid any existing chat context):
+https://chatgpt.com
+
+2. **Enter this prompt:**
+
+   ```bash
+   Create a Kestra flow that loads NYC taxi data from a CSV file to BigQuery. The flow should extract data, upload to GCS, and load to BigQuery.
+   ```
+
+3. **Observe the results:**
+   - ChatGPT will generate a Kestra flow, but it likely contains:
+     - **Outdated plugin syntax** e.g., old task types that have been renamed
+     - **Incorrect property names** e.g., properties that don't exist in current versions
+     - **Hallucinated features** e.g., tasks, triggers or properties that never existed
+
+#### Why Does This Happen?
+
+Large Language Models (LLMs) like GPT models from OpenAI are trained on data up to a specific point in time (knowledge cutoff). They don't automatically know about:
+
+- Software updates and new releases
+- Renamed plugins or changed APIs
+
+This is the fundamental challenge of using AI: **the model can only work with information it has access to.**
+
+#### Key Learning: Context is Everything
+
+Without proper context:
+
+- ❌ Generic AI assistants hallucinate outdated or incorrect code
+- ❌ You can't trust the output for production use
+
+With proper context:
+
+- ✅ AI generates accurate, current, production-ready code
+- ✅ You can iterate faster by letting AI generate boilerplate workflow code
+
+Below we'll see how Kestra's AI Copilot solves this problem.
+
+### AI Copilot in Kestra
+
+Kestra's AI Copilot is specifically designed to generate and modify Kestra flows with full context about the latest plugins, workflow syntax, and best practices.
+
+#### Setup AI Copilot
+
+Before using AI Copilot, you need to configure Gemini API access in your Kestra instance.
+
+**Step 1: Get Your Gemini API Key**
+
+1. Visit Google AI Studio: https://aistudio.google.com/app/apikey
+2. Sign in with your Google account
+3. Click "Create API Key"
+4. Copy the generated key (keep it secure!)
+
+> [!WARNING]  
+> Never commit API keys to Git. Always use environment variables or Kestra's KV Store.
+
+**Step 2: Configure Kestra AI Copilot**
+
+Add the following to your Kestra configuration. You can do this by modifying your `docker-compose.yml` file from 2.2:
+
+```yaml
+services:
+  kestra:
+    environment:
+      KESTRA_CONFIGURATION: |
+        kestra:
+          ai:
+            type: gemini
+            gemini:
+              model-name: gemini-2.5-flash
+              api-key: ${GEMINI_API_KEY}
+```
+
+Then restart Kestra:
+
+```bash
+cd << .. your project dir... >>
+export GEMINI_API_KEY="your-api-key-here"
+
+# OR IN WINDOWS 
+$env:GEMINI_API_KEY="your-api-key-here"
+
+# Then verify:
+echo $env:GEMINI_API_KEY
+
+docker compose up -d
+```
+
+#### Exercise: ChatGPT vs AI Copilot Comparison
+
+**Objective:** Learn why context engineering matters.
+
+1. **Open Kestra UI** at http://localhost:8080
+2. **Create a new flow** and open the Code editor panel
+3. **Click the AI Copilot button** (sparkle icon ✨) in the top-right corner
+4. **Enter the same exact prompt** we used with ChatGPT:
+
+   ```bash
+   Create a Kestra flow that loads NYC taxi data from a CSV file to BigQuery. The flow should extract data, upload to GCS, and load to BigQuery.
+   ```
+
+5. **Compare the outputs:**
+   - ✅ Copilot generates executable, working YAML
+   - ✅ Copilot uses correct plugin types and properties
+   - ✅ Copilot follows current Kestra best practices
+
+**Key Learning:** Context matters! AI Copilot has access to current Kestra documentation, generating Kestra flows better than a generic ChatGPT assistant.
