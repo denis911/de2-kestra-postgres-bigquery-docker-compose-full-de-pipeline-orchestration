@@ -1,6 +1,6 @@
 # de2-kestra-postgres-bigquery-docker-compose-full-de-pipeline-orchestration-with-AI-gemini
 
-Use Kestra to orchestrate data engineering pipelines with local setup using Docker compose
+How to use Kestra to orchestrate data engineering pipelines with local setup using Docker compose.
 
 ## Installing Kestra
 
@@ -13,7 +13,7 @@ Add information about setting a username and password.
 We'll set up Kestra using Docker Compose containing one container for the Kestra server and another for the Postgres database:
 
 ```bash
-cd 02-workflow-orchestration
+cd <<.. to your working directory ... >>
 docker compose up -d
 ```
 
