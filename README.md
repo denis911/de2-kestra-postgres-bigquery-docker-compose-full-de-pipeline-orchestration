@@ -1,4 +1,4 @@
-# de2-kestra-postgres-bigquery-docker-compose-full-de-pipeline-orchestration
+# de2-kestra-postgres-bigquery-docker-compose-full-de-pipeline-orchestration-with-AI
 
 Use Kestra to orchestrate data engineering pipelines with local setup using Docker compose
 
@@ -70,4 +70,35 @@ Now that we've built our first workflow, we can take it a step further by adding
 While Kestra has a huge variety of plugins available for building your workflows, you also have the option to write your own code and have Kestra execute that based on schedules or events. This means you can pick the right tools for your pipelines, rather than the ones you're limited to.
 
 In our example Python workflow, [`02_python.yaml`](flows/02_python.yaml), our code fetches the number of Docker image pulls from DockerHub and returns it as an output to Kestra. This is useful as we can access this output with other tasks, even though it was generated inside of our Python script.
+
+#### Resources - Workflows
+
+- [Tutorial](https://go.kestra.io/de-zoomcamp/tutorial)
+- [Workflow Components Documentation](https://go.kestra.io/de-zoomcamp/workflow-components)
+- [How-to Guide: Python](https://go.kestra.io/de-zoomcamp/python)
+
+## Hands-On Coding Project: Build Data Pipelines with Kestra
+
+Next, we're gonna build ETL pipelines for Yellow and Green Taxi data from NYC’s Taxi and Limousine Commission (TLC). You will:
+
+1. Extract data from [CSV files](https://github.com/DataTalksClub/nyc-tlc-data/releases).
+2. Load it into Postgres or Google Cloud (GCS + BigQuery).
+3. Explore scheduling and backfilling workflows.
+
+### Getting Started Pipeline
+
+This introductory flow is added just to demonstrate a simple data pipeline which extracts data via HTTP REST API, transforms that data in Python and then queries it using DuckDB. For this stage, a new separate Postgres database is created for the exercises. 
+
+```mermaid
+graph LR
+  Extract[Extract Data via HTTP REST API] --> Transform[Transform Data in Python]
+  Transform --> Query[Query Data with DuckDB]
+```
+
+Add the flow [`03_getting_started_data_pipeline.yaml`](flows/03_getting_started_data_pipeline.yaml) from the UI if you haven't already and execute it to see the results. Inspect the Gantt and Logs tabs to understand the flow execution.
+
+#### Resources - ETL
+
+- [ETL Tutorial Video](https://go.kestra.io/de-zoomcamp/etl-tutorial)
+- [ETL in 3 Minutes](https://go.kestra.io/de-zoomcamp/etl-get-started)
 
