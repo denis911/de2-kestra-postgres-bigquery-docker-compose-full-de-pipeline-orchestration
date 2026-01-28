@@ -1,4 +1,4 @@
-# de2-kestra-postgres-bigquery-docker-compose-full-de-pipeline-orchestration-with-AI
+# de2-kestra-postgres-bigquery-docker-compose-full-de-pipeline-orchestration-with-AI-gemini
 
 Use Kestra to orchestrate data engineering pipelines with local setup using Docker compose
 
